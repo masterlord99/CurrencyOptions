@@ -1,0 +1,142 @@
+---
+params:
+  par: NA
+  Options: NA
+  Futures: NA
+  history: NA
+  t: NA
+  tip: NA
+  v: NA
+  spremeni: NA
+output:
+  html_document
+  
+---
+
+# <span style="color:black">Results:</span>
+
+
+### <span style="color:brown">History trajectories:</span>
+
+```{r,echo=F,comment="",message=F}
+for(i in params$par[,1]){
+    x <- which(i == colnames(params$history))
+    y <- params$history[,1]
+    x <- params$history[,x]
+    g <- ggplot(data=data.frame(Currency=x,Time=as.Date(y))) +
+      #geom_line(aes(x=Time,y=sgolayfilt(Currency,p=3,n=101)),lwd=1,col="red")+
+      geom_smooth(aes(x=Time,y=Currency),lwd=1,col="green")  +
+      geom_line(aes(x=Time,y=Currency),lwd=1)  +
+      ggtitle(paste0(i))
+    print(g)
+}
+```
+
+
+
+
+### <span style="color:brown">Results:</span>
+
+```{r,comment="",echo=F}
+    xx <- c("Invested Money:",
+            "Paid premium:",
+            "Total Cost (for options):",
+            "Expected portfolio value for options (E[X]):",
+            "Predicted portfolio payoff for options:",
+            "Relative change in % (options only):",
+            "Expected portfolio value for futures (E[X]):",
+            "Predicted portfolio value for futures:")
+    yy <- c(sum(as.numeric(params$par[,3])),
+            sum(as.numeric(params$par[,5])),
+            sum(as.numeric(params$par[,3])) + sum(as.numeric(params$par[,5])),
+            mean(params$Options),
+            as.numeric(quantile(params$Options,probs=params$par[1,10])),
+            0,
+            mean(params$Futures),
+            as.numeric(quantile(params$Futures,probs=params$par[1,10]))
+    )
+    ahm <- data.frame(X=xx,
+                      Y=yy,
+                      stringsAsFactors = F,
+                      row.names = NULL)
+    colnames(ahm) <- c("Variables:","Values:")
+    ahm[6,2] <- (ahm[5,2] / ahm[3,2])*100
+    rownames(ahm) <- NULL
+    ahm
+```
+
+
+### <span style="color:brown">Options portfolio density:</span>
+
+
+```{r,echo=F,comment=""}
+    ha <- density(params$Options)
+    l1 <- as.numeric(min(params$par[1,10]*length(ha$y),1))
+    vup <- as.numeric(quantile(params$Options,probs=params$par[1,10]))
+    
+    g <- ggplot(data.frame(x=ha$x,y=ha$y), aes(x,y, fill="col")) +
+      geom_line(aes(x=x,y=y),lwd=1.2,col="black") +
+      xlab("Density of simulated portfolio returns (options):")
+    
+    d <- ggplot_build(g)$data[[1]]
+    
+    g <- g + geom_area(data = subset(d, x < vup), aes(x=x, y=y), fill="blue",alpha=0.35)
+    g <- g + geom_point(data = subset(d, x < vup),
+                        aes(x=tail(x,1),y=tail(y,1)),
+                        color="darkred",lwd=2)
+    g <- g + geom_segment(data=subset(d, x < vup),
+                          aes(x=tail(x,1),xend=tail(x,1),y=0,yend=tail(y,1)),col="darkred",lwd=1)
+    g <- g + geom_point(data = subset(d, x < vup),
+                        aes(x=tail(x,1),y=0),
+                        color="darkred",lwd=2) +
+      theme(legend.position="none")
+    g
+```
+
+
+
+
+
+### <span style="color:brown">Futures portfolio density:</span>
+
+
+```{r,echo=F,comment=""}
+    ha <- density(params$Futures)
+    l1 <- as.numeric(min(params$par[1,10]*length(ha$y),1))
+    vup <- as.numeric(quantile(params$Futures,probs=params$par[1,10]))
+    
+    g <- ggplot(data.frame(x=ha$x,y=ha$y), aes(x,y, fill="col")) +
+      geom_line(aes(x=x,y=y),lwd=1.2,col="black") +
+      xlab("Density of simulated portfolio returns (futures):")
+    
+    d <- ggplot_build(g)$data[[1]]
+    
+    g <- g + geom_area(data = subset(d, x < vup), aes(x=x, y=y), fill="blue",alpha=0.35)
+    g <- g + geom_point(data = subset(d, x < vup),
+                        aes(x=tail(x,1),y=tail(y,1)),
+                        color="darkred",lwd=2)
+    g <- g + geom_segment(data=subset(d, x < vup),
+                          aes(x=tail(x,1),xend=tail(x,1),y=0,yend=tail(y,1)),col="darkred",lwd=1)
+    g <- g + geom_point(data = subset(d, x < vup),
+                        aes(x=tail(x,1),y=0),
+                        color="darkred",lwd=2)+
+      theme(legend.position="none")
+    g
+```
+
+
+### <span style="color:brown">Chosen Parameters:</span>
+
+#### Part 1:
+```{r,comment="",echo=F}
+a <- params$par
+rownames(a) <- a[,1]
+a[,2:7]
+```
+#### Part 2:
+```{r,comment="",echo=F}
+a <- params$par
+rownames(a) <-a[,1]
+a[,8:12]
+```
+
